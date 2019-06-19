@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -8,16 +9,46 @@ import (
 )
 
 func main() {
-	filename := "./scenario1.ts"
-	file, err := os.Open(filename)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to open %s: %s\n", filename, err.Error())
-		os.Exit(1)
+	flag.Parse()
+	if flag.NArg() == 0 {
+		// read from stdin
+		err := mcat(os.Stdin, os.Stdout)
+		if err != nil {
+			handleError(err)
+		}
+	} else {
+		// read each input file and concat
+		err := mcatFiles(flag.Args())
+		if err != nil {
+			handleError(err)
+		}
 	}
-	er2 := mcat(file, os.Stdout)
-	if er2 != nil {
-		fmt.Fprintf(os.Stderr, "mcat: error %s\n", err.Error())
+}
+
+func handleError(err error) {
+	fmt.Fprintf(os.Stderr, "mcat: error %s\n", err.Error())
+	os.Exit(1)
+}
+
+func mcatFiles(files []string) error {
+	for _, filename := range files {
+		file, err := os.Open(filename)
+		defer func() {
+			if file != nil {
+				file.Close()
+			}
+		}()
+
+		if err != nil {
+			return fmt.Errorf("Failed to open %s: %s", filename, err.Error())
+		}
+
+		err2 := mcat(file, os.Stdout)
+		if err2 != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func mcat(input *os.File, output *os.File) error {
