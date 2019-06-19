@@ -8,17 +8,35 @@ import (
 	"github.com/Comcast/gots/packet"
 )
 
+var output = flag.String("output", "", "Output file (default: stdout)")
+
 func main() {
 	flag.Parse()
+
+	// parse output file argument
+	outputFile := os.Stdout
+	var errOutput error
+	if len(*output) > 0 {
+		outputFile, errOutput = os.OpenFile(*output, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if errOutput != nil {
+			handleError(errOutput)
+		}
+	}
+	defer func() {
+		if outputFile != os.Stdout && outputFile != nil {
+			outputFile.Close()
+		}
+	}()
+
 	if flag.NArg() == 0 {
 		// read from stdin
-		err := mcat(os.Stdin, os.Stdout)
+		err := mcat(os.Stdin, outputFile)
 		if err != nil {
 			handleError(err)
 		}
 	} else {
 		// read each input file and concat
-		err := mcatFiles(flag.Args())
+		err := mcatFiles(flag.Args(), outputFile)
 		if err != nil {
 			handleError(err)
 		}
@@ -30,7 +48,7 @@ func handleError(err error) {
 	os.Exit(1)
 }
 
-func mcatFiles(files []string) error {
+func mcatFiles(files []string, output *os.File) error {
 	for _, filename := range files {
 		file, err := os.Open(filename)
 		defer func() {
@@ -43,7 +61,7 @@ func mcatFiles(files []string) error {
 			return fmt.Errorf("Failed to open %s: %s", filename, err.Error())
 		}
 
-		err2 := mcat(file, os.Stdout)
+		err2 := mcat(file, output)
 		if err2 != nil {
 			return err
 		}
