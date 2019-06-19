@@ -6,6 +6,8 @@ This is only an early prototype for playing with the API surface at present and 
 
 ## Build instructions
 
+You need to have [Go][golang] installed and set up.
+
 ```shell
 go get github.com/igilham/mcat
 cd ${GOPATH}/src/github.com/igilham/mcat
