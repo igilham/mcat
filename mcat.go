@@ -8,7 +8,7 @@ import (
 	"github.com/Comcast/gots/packet"
 )
 
-var output = flag.String("output", "", "Output file (default: stdout)")
+var output = flag.String("o", "", "Output file (default: stdout)")
 
 func main() {
 	flag.Parse()
