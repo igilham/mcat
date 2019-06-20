@@ -18,8 +18,6 @@ go build
 
 I want to look into some of the following things to learn more about MPEG, the [gots][gots] API, and [Go][golang] in general.
 
-- Buffered reader/writer implementation
-- [Sync the reader to the packets](https://github.com/Comcast/gots/blob/master/cli/parsefile.go#L68)
 - Explore options to correct the [programme clock reference (PCR)][pcr] while concatenating transport stream packets
 - Explore options to drop [null packets][null_packet]
 
