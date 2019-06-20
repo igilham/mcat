@@ -11,6 +11,7 @@ import (
 )
 
 var output = flag.String("o", "", "Output file (default: stdout)")
+var loop = flag.Bool("l", false, "Loop a single input")
 
 func main() {
 	flag.Parse()
@@ -36,6 +37,12 @@ func main() {
 		if err != nil {
 			handleError(err)
 		}
+	} else if *loop {
+		// loop a single input file
+		err := mcatLoop(flag.Arg(0), outputFile)
+		if err != nil {
+			handleError(err)
+		}
 	} else {
 		// read each input file and concat
 		err := mcatFiles(flag.Args(), outputFile)
@@ -48,6 +55,37 @@ func main() {
 func handleError(err error) {
 	fmt.Fprintf(os.Stderr, "mcat: error %s\n", err.Error())
 	os.Exit(1)
+}
+
+type config struct {
+	loop bool
+}
+
+// mcatLoop reads from input and starts again when it reaches
+// the end of the file
+func mcatLoop(filename string, output *os.File) error {
+	file, err := os.Open(filename)
+	defer func() {
+		if file != nil {
+			file.Close()
+		}
+	}()
+
+	if err != nil {
+		return fmt.Errorf("Failed to open %s: %s", filename, err.Error())
+	}
+
+	for {
+		err := mcat(file, output)
+		if err == io.EOF || err == io.ErrUnexpectedEOF {
+			_, err2 := file.Seek(0, 0)
+			if err2 != nil {
+				return fmt.Errorf("error returning to start of file %s: %s", filename, err2.Error())
+			}
+			continue
+		}
+		return fmt.Errorf("error reading from %s: %s", filename, err.Error())
+	}
 }
 
 // mcatFiles is a thin wrapper around mcat that loops through
@@ -91,7 +129,7 @@ func mcat(input *os.File, output *os.File) error {
 	for {
 		if _, err := io.ReadFull(reader, pkt[:]); err != nil {
 			if err == io.EOF || err == io.ErrUnexpectedEOF {
-				break
+				return err
 			}
 			return fmt.Errorf("error reading from %s: %s", input.Name(), err.Error())
 		}
