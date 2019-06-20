@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"os"
@@ -70,9 +71,17 @@ func mcatFiles(files []string, output *os.File) error {
 }
 
 func mcat(input *os.File, output *os.File) error {
+	reader := bufio.NewReader(input)
+
+	// sync to the first packet header
+	_, err := packet.Sync(reader)
+	if err != nil {
+		return fmt.Errorf("error finding sync byte: %s", err.Error())
+	}
+
 	pkt := make([]byte, packet.PacketSize)
 
-	for read, err := input.Read(pkt); read > 0 && err == nil; read, err = input.Read(pkt) {
+	for read, err := reader.Read(pkt); read > 0 && err == nil; read, err = reader.Read(pkt) {
 		if err != nil {
 			return fmt.Errorf("error reading from %s: %s", input.Name(), err.Error())
 		}
