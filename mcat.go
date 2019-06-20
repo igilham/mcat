@@ -50,6 +50,8 @@ func handleError(err error) {
 	os.Exit(1)
 }
 
+// mcatFiles is a thin wrapper around mcat that loops through
+// a list of files, calling mcat with each as an input
 func mcatFiles(files []string, output *os.File) error {
 	for _, filename := range files {
 		file, err := os.Open(filename)
