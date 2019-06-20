@@ -71,6 +71,10 @@ func mcatFiles(files []string, output *os.File) error {
 	return nil
 }
 
+// mcat syncs to the first TS packet in input then reads packets
+// continuously while writing them to output.
+// input must be opened in a readable way. output must be opened
+// for writing. The caller has responsibility for closing both.
 func mcat(input *os.File, output *os.File) error {
 	reader := bufio.NewReader(input)
 
