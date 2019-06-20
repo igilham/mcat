@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/Comcast/gots/packet"
@@ -79,16 +80,21 @@ func mcat(input *os.File, output *os.File) error {
 		return fmt.Errorf("error finding sync byte: %s", err.Error())
 	}
 
-	pkt := make([]byte, packet.PacketSize)
+	var pkt packet.Packet
 
-	for read, err := reader.Read(pkt); read > 0 && err == nil; read, err = reader.Read(pkt) {
-		if err != nil {
+	for {
+		if _, err := io.ReadFull(reader, pkt[:]); err != nil {
+			if err == io.EOF || err == io.ErrUnexpectedEOF {
+				break
+			}
 			return fmt.Errorf("error reading from %s: %s", input.Name(), err.Error())
 		}
-		_, err2 := os.Stdout.Write(pkt)
+
+		_, err2 := os.Stdout.Write(pkt[:])
 		if err2 != nil {
 			return fmt.Errorf("error writing output to %s: %s", output.Name(), err2.Error())
 		}
 	}
+
 	return nil
 }
